@@ -1,0 +1,719 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ubiblion</title>
+<style>
+  :root {
+    --bg: #f6f5f2; --fg: #1b1b19; --muted: #6b6862;
+    --card: #fffefb; --line: #ddd9d0; --accent: #2f6f4f; --danger: #9c3b2e;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #16171a; --fg: #e8e6e1; --muted: #9a978f;
+      --card: #1e2024; --line: #2f3238; --accent: #6fbf94; --danger: #d97a68;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 1.5rem 1rem 3rem; background: var(--bg); color: var(--fg);
+    font: 16px/1.5 system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  main { max-width: 46rem; margin: 0 auto; }
+  .topbar { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; }
+  h1 { font-size: 1.5rem; margin: 0 0 .25rem; letter-spacing: -.01em; }
+  .sub { color: var(--muted); margin: 0 0 1.5rem; font-size: .9rem; }
+  #webLang {
+    font: inherit; font-size: .85rem; padding: .3rem .5rem; border-radius: 6px; color: var(--fg);
+    border: 1px solid var(--line); background: var(--card);
+  }
+  .card {
+    background: var(--card); border: 1px solid var(--line); border-radius: 10px;
+    padding: 1rem; margin-bottom: 1rem;
+  }
+  #drop {
+    border: 2px dashed var(--line); border-radius: 10px; padding: 2rem 1rem;
+    text-align: center; color: var(--muted); cursor: pointer; transition: .15s;
+  }
+  #drop.over, #drop:hover { border-color: var(--accent); color: var(--fg); }
+  #drop strong { color: var(--fg); }
+  .book { display: flex; align-items: center; gap: .75rem; padding: .6rem 0; border-bottom: 1px solid var(--line); }
+  .book:last-child { border-bottom: 0; }
+  .book .meta { flex: 1; min-width: 0; }
+  .book .title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .book .info { color: var(--muted); font-size: .82rem; }
+  button {
+    font: inherit; font-size: .85rem; padding: .35rem .7rem; border-radius: 6px;
+    border: 1px solid var(--line); background: transparent; color: var(--fg); cursor: pointer;
+  }
+  button:hover { border-color: var(--accent); }
+  button.danger:hover { border-color: var(--danger); color: var(--danger); }
+  button:disabled { opacity: .5; cursor: default; }
+  .bar { height: 6px; background: var(--line); border-radius: 3px; overflow: hidden; margin-top: .5rem; }
+  .bar > i { display: block; height: 100%; background: var(--accent); width: 0; transition: width .3s; }
+  .status { display: flex; flex-wrap: wrap; gap: .25rem 1.25rem; color: var(--muted); font-size: .85rem; }
+  .status b { color: var(--fg); font-weight: 600; }
+  .log { font-size: .85rem; color: var(--muted); margin-top: .75rem; white-space: pre-wrap; }
+  .log.err { color: var(--danger); }
+  .empty { color: var(--muted); font-size: .9rem; }
+  summary { cursor: pointer; font-weight: 600; }
+  #cfg { display: grid; gap: .6rem; margin-top: 1rem; }
+  #cfg label { display: grid; gap: .2rem; font-size: .85rem; color: var(--muted); }
+  #cfg select,
+  #cfg input {
+    font: inherit; padding: .4rem .5rem; border-radius: 6px; color: var(--fg);
+    border: 1px solid var(--line); background: var(--bg);
+  }
+  #cfg .row { display: flex; gap: .5rem; }
+  .pad { margin-top: 1rem; display: grid; gap: .6rem; }
+  .pad .row { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
+  .pad h4 { margin: .5rem 0 0; font-size: .9rem; }
+  .pad input { font: inherit; padding: .3rem .4rem; border-radius: 6px; color: var(--fg);
+               border: 1px solid var(--line); background: var(--bg); }
+  .check { display: flex; align-items: center; gap: .35rem; font-size: .85rem; color: var(--muted); }
+  .screen {
+    margin: 0; padding: .6rem .8rem; border: 1px solid var(--line); border-radius: 8px;
+    background: var(--bg); font: 12px/1.45 ui-monospace, "Cascadia Code", Consolas, monospace;
+    white-space: pre-wrap; overflow-x: auto; min-height: 2rem;
+  }
+  .screen .inv { background: var(--fg); color: var(--bg); }
+  #cfg label.check { grid-auto-flow: column; justify-content: start; align-items: center; gap: .5rem; }
+  #cfg label.check input { width: auto; }
+</style>
+</head>
+<body>
+<main>
+  <div class="topbar">
+    <h1>ubiblion</h1>
+    <select id="webLang" aria-label="Language"></select>
+  </div>
+  <p class="sub" data-i18n="app.subtitle"></p>
+
+  <div class="card">
+    <div id="drop">
+      <strong data-i18n="drop.title"></strong><br>
+      <span data-i18n="drop.hint"></span>
+      <input type="file" id="file" accept=".txt,.epub,text/plain,application/epub+zip" hidden multiple>
+    </div>
+    <div class="bar" id="progressBar" hidden><i></i></div>
+    <div class="log" id="log"></div>
+  </div>
+
+  <div class="card">
+    <div class="status" id="status"><span data-i18n="status.loading"></span></div>
+  </div>
+
+  <div class="card">
+    <div id="books"><p class="empty" data-i18n="books.loading"></p></div>
+  </div>
+
+  <details class="card" id="devCard" hidden>
+    <summary data-i18n="dev.title"></summary>
+    <p class="empty" data-i18n="dev.desc"></p>
+    <div class="pad">
+      <div class="row">
+        <button data-press="PREV">◀ PREV</button>
+        <button data-press="NEXT">NEXT ▶</button>
+        <button data-press="OK">OK</button>
+        <button data-press="BACK">BACK</button>
+        <label class="check"><input type="checkbox" id="longPress"> <span data-i18n="dev.longPress"></span></label>
+      </div>
+      <h4 data-i18n="dev.screenTitle"></h4>
+      <pre id="screen" class="screen">—</pre>
+      <div class="row">
+        <button id="refreshScreen" data-i18n="dev.refreshScreen"></button>
+        <label class="check"><input type="checkbox" id="autoScreen" checked> <span data-i18n="dev.auto"></span></label>
+      </div>
+      <h4 data-i18n="dev.pageInspector"></h4>
+      <div class="row">
+        <input id="pgId" placeholder="b0001" size="7">
+        <input id="pgNum" type="number" value="0" min="0" size="5">
+        <button id="pgGo" data-i18n="dev.viewPage"></button>
+      </div>
+      <pre id="pageOut" class="screen">—</pre>
+      <h4 data-i18n="dev.lastButtons"></h4>
+      <pre id="inputLog" class="screen">—</pre>
+    </div>
+  </details>
+
+  <details class="card">
+    <summary data-i18n="net.title"></summary>
+    <form id="cfg">
+      <label><span data-i18n="net.ssid"></span><input name="ssid" autocomplete="off"></label>
+      <label><span data-i18n="net.pass"></span>
+        <input name="pass" type="password" autocomplete="new-password"></label>
+      <label><span data-i18n="net.hostname"></span><input name="hostname" autocomplete="off"></label>
+      <label><span data-i18n="net.apiKey"></span><input name="apiKey" autocomplete="off"></label>
+      <label><span data-i18n="net.fullRefresh"></span>
+        <input name="fullRefreshEvery" type="number" min="0" max="99"></label>
+      <label><span data-i18n="net.wifiOnBoot"></span>
+        <select name="wifiOnBoot">
+          <option value="0" data-i18n="net.wifiOnBoot0"></option>
+          <option value="1" data-i18n="net.wifiOnBoot1"></option>
+          <option value="2" data-i18n="net.wifiOnBoot2"></option>
+        </select></label>
+      <label id="langRow" hidden><span data-i18n="net.language"></span>
+        <select name="lang"></select></label>
+      <div class="row">
+        <button type="submit" data-i18n="net.save"></button>
+        <button type="button" id="reboot" data-i18n="net.reboot"></button>
+      </div>
+      <span class="empty" id="cfgNote"></span>
+    </form>
+  </details>
+</main>
+
+<script id="i18n-data" type="application/json">%%I18N_JSON%%</script>
+<script>
+"use strict";
+
+// ---------------------------------------------------------------------------
+// i18n: which languages are available here is decided at build time (see
+// tools/build_web.py / UBIBLION_WEB_LANGS) and baked into the JSON blob
+// above. This only covers the WEB PAGE's own language, chosen client-side
+// and kept in localStorage; it's independent from the reader's on-device
+// screen language (that one lives in Config::Settings::lang on the device
+// and is set further down, in the network settings form).
+// ---------------------------------------------------------------------------
+
+const I18N = JSON.parse(document.getElementById("i18n-data").textContent);
+const LANGS = Object.keys(I18N);
+
+function detectLang() {
+  const prefs = navigator.languages || [navigator.language || "en"];
+  for (const p of prefs) {
+    const code = p.slice(0, 2).toLowerCase();
+    if (I18N[code]) return code;
+  }
+  return LANGS[0];
+}
+
+let lang = localStorage.getItem("ubiblion-web-lang");
+if (!lang || !I18N[lang]) lang = detectLang();
+
+function t(key, vars) {
+  let s = (I18N[lang] && I18N[lang][key]) || (I18N[LANGS[0]] && I18N[LANGS[0]][key]) || key;
+  if (vars) for (const k in vars) s = s.replace("{" + k + "}", vars[k]);
+  return s;
+}
+
+function applyI18n() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll("[data-i18n]").forEach((el) => {
+    el.textContent = t(el.dataset.i18n);
+  });
+}
+
+function setupLangSwitcher() {
+  const sel = $("#webLang");
+  sel.innerHTML = LANGS.map((code) => `<option value="${code}">${I18N[code]._name}</option>`).join("");
+  sel.value = lang;
+  sel.onchange = () => {
+    lang = sel.value;
+    localStorage.setItem("ubiblion-web-lang", lang);
+    applyI18n();
+    // Re-render everything with dynamically built (non data-i18n) text.
+    refreshStatus();
+    refreshBooks();
+    loadConfig();
+  };
+}
+
+const $ = (sel) => document.querySelector(sel);
+const logEl = $("#log");
+const barEl = $("#progressBar");
+
+function log(msg, isError) {
+  logEl.textContent = msg;
+  logEl.className = isError ? "log err" : "log";
+}
+
+function progress(pct) {
+  if (pct === null) { barEl.hidden = true; return; }
+  barEl.hidden = false;
+  barEl.firstElementChild.style.width = Math.max(0, Math.min(100, pct)) + "%";
+}
+
+function fmtSize(bytes) {
+  if (bytes < 1024) return bytes + " B";
+  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(0) + " KB";
+  return (bytes / 1024 / 1024).toFixed(1) + " MB";
+}
+
+// ---------------------------------------------------------------------------
+// ZIP reading in the browser.
+//
+// The ESP8266 doesn't have enough RAM to inflate an EPUB (the deflate window
+// alone is 32KB), so the work happens here: the ZIP is parsed by hand and
+// decompressed with DecompressionStream, which is native. No external
+// libraries.
+// ---------------------------------------------------------------------------
+
+const utf8 = new TextDecoder("utf-8");
+
+function readZip(buffer) {
+  const view = new DataView(buffer);
+  const bytes = new Uint8Array(buffer);
+
+  // End of central directory: signature 0x06054b50, scanning from the end.
+  let eocd = -1;
+  const minEocd = 22;
+  const scanFrom = Math.max(0, bytes.length - minEocd - 65535);
+  for (let i = bytes.length - minEocd; i >= scanFrom; i--) {
+    if (view.getUint32(i, true) === 0x06054b50) { eocd = i; break; }
+  }
+  if (eocd < 0) throw new Error(t("zip.notZip"));
+
+  const entryCount = view.getUint16(eocd + 10, true);
+  let pos = view.getUint32(eocd + 16, true);
+
+  const entries = new Map();
+  for (let n = 0; n < entryCount; n++) {
+    if (view.getUint32(pos, true) !== 0x02014b50) break;
+    const method = view.getUint16(pos + 10, true);
+    const compSize = view.getUint32(pos + 20, true);
+    const nameLen = view.getUint16(pos + 28, true);
+    const extraLen = view.getUint16(pos + 30, true);
+    const commentLen = view.getUint16(pos + 32, true);
+    const localOffset = view.getUint32(pos + 42, true);
+    const name = utf8.decode(bytes.subarray(pos + 46, pos + 46 + nameLen));
+    entries.set(name, { method, compSize, localOffset });
+    pos += 46 + nameLen + extraLen + commentLen;
+  }
+  return { view, bytes, entries };
+}
+
+async function inflateRaw(chunk) {
+  const stream = new Blob([chunk]).stream().pipeThrough(new DecompressionStream("deflate-raw"));
+  return new Uint8Array(await new Response(stream).arrayBuffer());
+}
+
+async function readEntry(zip, name) {
+  const e = zip.entries.get(name);
+  if (!e) throw new Error(t("zip.missingEntry", { name }));
+  // The local header repeats the name and extras: they need to be skipped.
+  if (zip.view.getUint32(e.localOffset, true) !== 0x04034b50) {
+    throw new Error(t("zip.badLocalHeader", { name }));
+  }
+  const nameLen = zip.view.getUint16(e.localOffset + 26, true);
+  const extraLen = zip.view.getUint16(e.localOffset + 28, true);
+  const start = e.localOffset + 30 + nameLen + extraLen;
+  const raw = zip.bytes.subarray(start, start + e.compSize);
+  if (e.method === 0) return raw;
+  if (e.method === 8) return await inflateRaw(raw);
+  throw new Error(t("zip.unsupportedCompression", { method: e.method, name }));
+}
+
+async function readEntryText(zip, name) {
+  return utf8.decode(await readEntry(zip, name));
+}
+
+// ---------------------------------------------------------------------------
+// EPUB -> plain text
+// ---------------------------------------------------------------------------
+
+const BLOCK_TAGS = new Set([
+  "P", "DIV", "H1", "H2", "H3", "H4", "H5", "H6", "LI", "BLOCKQUOTE",
+  "SECTION", "ARTICLE", "TR", "BR", "HR", "PRE", "FIGCAPTION", "TD",
+]);
+
+function domToText(root) {
+  const parts = [];
+  (function walk(node) {
+    if (node.nodeType === 3) { parts.push(node.nodeValue.replace(/\s+/g, " ")); return; }
+    if (node.nodeType !== 1) return;
+    const tag = node.tagName.toUpperCase();
+    if (tag === "SCRIPT" || tag === "STYLE" || tag === "HEAD") return;
+    const block = BLOCK_TAGS.has(tag);
+    if (block) parts.push("\n");
+    for (const child of node.childNodes) walk(child);
+    if (block) parts.push("\n");
+  })(root);
+  return parts.join("");
+}
+
+function parseXml(text) {
+  const parser = new DOMParser();
+  let doc = parser.parseFromString(text, "application/xhtml+xml");
+  if (doc.getElementsByTagName("parsererror").length) {
+    // Many EPUBs aren't valid XHTML; the HTML parser is more forgiving.
+    doc = parser.parseFromString(text, "text/html");
+  }
+  return doc;
+}
+
+function resolvePath(base, relative) {
+  const stack = base.split("/").slice(0, -1);
+  for (const part of relative.split("/")) {
+    if (part === "." || part === "") continue;
+    if (part === "..") stack.pop();
+    else stack.push(part);
+  }
+  return stack.join("/");
+}
+
+async function epubToText(buffer, onStep) {
+  const zip = readZip(buffer);
+
+  const container = parseXml(await readEntryText(zip, "META-INF/container.xml"));
+  const rootfile = container.querySelector("rootfile");
+  const opfPath = rootfile && rootfile.getAttribute("full-path");
+  if (!opfPath) throw new Error(t("epub.noOpf"));
+
+  const opf = parseXml(await readEntryText(zip, opfPath));
+
+  const titleEl = opf.querySelector("metadata > title, title");
+  const authorEl = opf.querySelector("metadata > creator, creator");
+  const title = titleEl ? titleEl.textContent.trim() : "";
+  const author = authorEl ? authorEl.textContent.trim() : "";
+
+  const hrefById = new Map();
+  for (const item of opf.querySelectorAll("manifest > item")) {
+    hrefById.set(item.getAttribute("id"), {
+      href: item.getAttribute("href"),
+      type: item.getAttribute("media-type") || "",
+    });
+  }
+
+  const spine = [];
+  for (const ref of opf.querySelectorAll("spine > itemref")) {
+    const item = hrefById.get(ref.getAttribute("idref"));
+    if (!item || !item.href) continue;
+    if (item.type && !/html|xml/.test(item.type)) continue;
+    spine.push(decodeURIComponent(resolvePath(opfPath, item.href)));
+  }
+  if (!spine.length) throw new Error(t("epub.noSpine"));
+
+  const chunks = [];
+  for (let i = 0; i < spine.length; i++) {
+    onStep && onStep(Math.round((i / spine.length) * 100));
+    let html;
+    try {
+      html = await readEntryText(zip, spine[i]);
+    } catch (err) {
+      continue;  // missing chapter: carry on with the rest
+    }
+    const doc = parseXml(html);
+    chunks.push(domToText(doc.body || doc.documentElement));
+    // Yield the thread so the progress bar can repaint.
+    await new Promise((r) => setTimeout(r, 0));
+  }
+
+  return { text: normalize(chunks.join("\n\n")), title, author };
+}
+
+// One paragraph per line, no blank lines: on a 200px screen every line
+// counts, and the device itself separates paragraphs when wrapping text.
+function normalize(text) {
+  return text
+    .normalize("NFC")
+    .replace(new RegExp(String.fromCharCode(0xa0), "g"), " ")
+    .replace(new RegExp("[" + String.fromCharCode(0x200b, 0x200c, 0x200d, 0xfeff) + "]", "g"), "")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .filter((line) => line.length > 0)
+    .join("\n") + "\n";
+}
+
+// ---------------------------------------------------------------------------
+// Device API
+// ---------------------------------------------------------------------------
+
+const api = {
+  key: localStorage.getItem("ubiblion-key") || "",
+  headers() { return this.key ? { "X-Api-Key": this.key } : {}; },
+  async get(path) {
+    const res = await fetch(path, { headers: this.headers() });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  },
+  async send(method, path) {
+    const res = await fetch(path, { method, headers: this.headers() });
+    if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || ("HTTP " + res.status));
+    return res.json();
+  },
+  async upload(text, title, author) {
+    const body = new FormData();
+    // The filename travels as a fallback: if the firmware doesn't see the
+    // URL's `title` parameter, it falls back to this.
+    const filename = (title.replace(/[\\/:*?"<>|]/g, "_").slice(0, 60) || "book") + ".txt";
+    body.append("file", new Blob([text], { type: "text/plain" }), filename);
+    const query = "?title=" + encodeURIComponent(title) + "&author=" + encodeURIComponent(author);
+    const res = await fetch("/api/books" + query, { method: "POST", body, headers: this.headers() });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+    return data;
+  },
+};
+
+async function refreshStatus() {
+  try {
+    const s = await api.get("/api/status");
+    const idx = s.indexing || {};
+    $("#status").innerHTML = [
+      `<span>${t("status.books", { count: s.books, max: s.maxBooks })}</span>`,
+      `<span>${t("status.free", { free: fmtSize(s.fsFree), total: fmtSize(s.fsTotal) })}</span>`,
+      `<span>${t("status.heap", { heap: fmtSize(s.heap) })}</span>`,
+      `<span>v${s.version}</span>`,
+      idx.active ? `<span>${t("status.indexing", { id: idx.id, pct: idx.progress })}</span>` : "",
+      s.dev ? `<span><b>${t("status.dev")}</b></span>` : "",
+    ].join("");
+    if (s.dev) enableDev();
+    return s;
+  } catch (err) {
+    $("#status").innerHTML = `<span>${t("status.offline")}</span>`;
+    return null;
+  }
+}
+
+async function refreshBooks() {
+  const container = $("#books");
+  try {
+    const books = await api.get("/api/library");
+    if (!books.length) {
+      container.innerHTML = `<p class="empty">${t("books.empty")}</p>`;
+      return;
+    }
+    container.innerHTML = "";
+    for (const b of books) {
+      const pct = b.pages > 1 ? Math.round((b.page * 100) / (b.pages - 1)) : 0;
+      const row = document.createElement("div");
+      row.className = "book";
+      row.innerHTML = `
+        <div class="meta">
+          <div class="title"></div>
+          <div class="info"></div>
+        </div>
+        <button data-open>${t("books.open")}</button>
+        <button data-del class="danger">${t("books.delete")}</button>`;
+      row.querySelector(".title").textContent = b.title || b.id;
+      row.querySelector(".info").textContent =
+        [b.author, fmtSize(b.bytes), b.indexed ? t("books.pagesPct", { pages: b.pages, pct }) : t("books.notIndexed")]
+          .filter(Boolean).join(" · ");
+      row.querySelector("[data-open]").onclick = async () => {
+        await api.send("POST", `/api/books/${b.id}/open`);
+        log(t("books.openedLog", { title: b.title }));
+        refreshBooks();
+      };
+      row.querySelector("[data-del]").onclick = async () => {
+        if (!confirm(t("books.deleteConfirm", { title: b.title }))) return;
+        await api.send("DELETE", `/api/books/${b.id}`);
+        log(t("books.deletedLog", { title: b.title }));
+        refreshBooks();
+        refreshStatus();
+      };
+      container.appendChild(row);
+    }
+  } catch (err) {
+    container.innerHTML = `<p class="empty">${t("books.loadError", { error: err.message })}</p>`;
+  }
+}
+
+// Waits for the device to finish indexing the book just uploaded.
+async function waitForIndexing() {
+  for (let i = 0; i < 600; i++) {
+    const s = await refreshStatus();
+    if (!s || !s.indexing || !s.indexing.active) return;
+    progress(s.indexing.progress);
+    log(t("upload.indexingRemote", { pct: s.indexing.progress }));
+    await new Promise((r) => setTimeout(r, 1000));
+  }
+}
+
+async function handleFiles(files) {
+  for (const file of files) {
+    try {
+      let payload;
+      if (/\.epub$/i.test(file.name)) {
+        if (typeof DecompressionStream === "undefined") {
+          throw new Error(t("upload.noDecompression"));
+        }
+        log(t("upload.converting", { name: file.name }));
+        progress(0);
+        payload = await epubToText(await file.arrayBuffer(), (pct) => {
+          progress(pct);
+          log(t("upload.convertingPct", { name: file.name, pct }));
+        });
+      } else {
+        const text = normalize(await file.text());
+        payload = { text, title: file.name.replace(/\.[^.]+$/, ""), author: "" };
+      }
+      if (!payload.title) payload.title = file.name.replace(/\.[^.]+$/, "");
+      if (!payload.text.trim()) throw new Error(t("upload.noText"));
+
+      progress(100);
+      log(t("upload.uploading", { title: payload.title, size: fmtSize(payload.text.length) }));
+      const res = await api.upload(payload.text, payload.title, payload.author);
+      log(t("upload.uploaded", { id: res.id }));
+      await waitForIndexing();
+      log(t("upload.ready", { title: payload.title }));
+    } catch (err) {
+      log(t("upload.error", { name: file.name, error: err.message }), true);
+    } finally {
+      progress(null);
+      refreshBooks();
+      refreshStatus();
+    }
+  }
+}
+
+const drop = $("#drop");
+const input = $("#file");
+drop.onclick = () => input.click();
+input.onchange = () => { handleFiles([...input.files]); input.value = ""; };
+["dragenter", "dragover"].forEach((ev) =>
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave", "drop"].forEach((ev) =>
+  drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", (e) => handleFiles([...e.dataTransfer.files]));
+
+// --- network settings ---
+const cfgForm = $("#cfg");
+
+async function loadConfig() {
+  try {
+    const cfg = await api.get("/api/config");
+    cfgForm.ssid.value = cfg.ssid || "";
+    cfgForm.hostname.value = cfg.hostname || "";
+    cfgForm.fullRefreshEvery.value = cfg.fullRefreshEvery;
+    cfgForm.wifiOnBoot.value = String(cfg.wifiOnBoot ?? 1);
+    cfgForm.pass.placeholder = cfg.hasPassword ? t("cfg.passSaved") : t("cfg.passEmpty");
+    cfgForm.apiKey.placeholder = cfg.hasApiKey ? t("cfg.keySaved") : t("net.apiKeyPlaceholder");
+    $("#cfgNote").textContent = cfg.mode === "ap" ? t("cfg.apMode") : "";
+
+    // The device's own screen language: only shown if the firmware compiled
+    // in more than one (see UBIBLION_LANG_* in platformio.ini).
+    if (cfg.languages && cfg.languages.length > 1) {
+      $("#langRow").hidden = false;
+      const langSel = cfgForm.lang;
+      langSel.innerHTML = cfg.languages
+        .map((l, i) => `<option value="${i}">${l.name}</option>`).join("");
+      langSel.value = String(cfg.lang || 0);
+    } else {
+      $("#langRow").hidden = true;
+    }
+  } catch (err) {
+    $("#cfgNote").textContent = t("cfg.loadError");
+  }
+}
+
+cfgForm.onsubmit = async (e) => {
+  e.preventDefault();
+  const body = {
+    ssid: cfgForm.ssid.value.trim(),
+    hostname: cfgForm.hostname.value.trim(),
+    fullRefreshEvery: Number(cfgForm.fullRefreshEvery.value),
+    wifiOnBoot: Number(cfgForm.wifiOnBoot.value),
+  };
+  // Empty fields aren't sent: that way what's already saved doesn't get wiped.
+  if (cfgForm.pass.value) body.pass = cfgForm.pass.value;
+  if (cfgForm.apiKey.value) body.apiKey = cfgForm.apiKey.value;
+  if (!$("#langRow").hidden) body.lang = Number(cfgForm.lang.value);
+  try {
+    const res = await fetch("/api/config", {
+      method: "POST",
+      headers: Object.assign({ "Content-Type": "application/json" }, api.headers()),
+      body: JSON.stringify(body),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || ("HTTP " + res.status));
+    if (body.apiKey) { api.key = body.apiKey; localStorage.setItem("ubiblion-key", body.apiKey); }
+    cfgForm.pass.value = "";
+    cfgForm.apiKey.value = "";
+    $("#cfgNote").textContent = data.note || t("cfg.saved");
+    loadConfig();
+  } catch (err) {
+    $("#cfgNote").textContent = t("cfg.error", { error: err.message });
+  }
+};
+
+// --- development mode (only if the firmware has it) ---
+let devReady = false;
+
+function enableDev() {
+  if (devReady) return;
+  devReady = true;
+  $("#devCard").hidden = false;
+
+  document.querySelectorAll("[data-press]").forEach((btn) => {
+    btn.onclick = async () => {
+      const long = $("#longPress").checked ? "1" : "0";
+      await fetch(`/api/debug/press?button=${btn.dataset.press}&long=${long}`,
+                  { method: "POST", headers: api.headers() });
+      // E-ink is slow: give it time before rereading the screen.
+      setTimeout(readScreen, 1200);
+    };
+  });
+
+  $("#refreshScreen").onclick = readScreen;
+  $("#pgGo").onclick = readPage;
+  readScreen();
+  setInterval(() => { if ($("#autoScreen").checked) readScreen(); }, 5000);
+}
+
+async function readScreen() {
+  try {
+    const s = await api.get("/api/debug/screen");
+    // Rebuild the screen by sorting on baseline position.
+    const lines = s.lines.slice().sort((a, b) => a.y - b.y || a.x - b.x);
+    const out = lines.map((l) => {
+      const indent = " ".repeat(Math.max(0, Math.round((l.x - 6) / 6)));
+      const text = indent + l.t;
+      return l.inv ? `<span class="inv">${escapeHtml(text)}</span>` : escapeHtml(text);
+    });
+    $("#screen").innerHTML =
+      (out.join("\n") || t("dev.emptyScreen")) +
+      "\n\n" + t("dev.screenInfo", { lines: s.linesPerPage, height: s.lineHeight, refreshes: s.refreshes });
+    readInput();
+  } catch (err) {
+    $("#screen").textContent = t("dev.screenError", { error: err.message });
+  }
+}
+
+async function readInput() {
+  try {
+    const log = await api.get("/api/debug/input");
+    $("#inputLog").textContent = log.length
+      ? log.map((e) => t("dev.buttonAgo", { secs: (e.ago / 1000).toFixed(1), button: e.button }) +
+                       (e.long ? t("dev.buttonLong") : "") +
+                       (e.injected ? t("dev.buttonWeb") : t("dev.buttonPhysical"))).join("\n")
+      : t("dev.noButtonsYet");
+  } catch (err) { /* silent: this is informational only */ }
+}
+
+async function readPage() {
+  const id = $("#pgId").value.trim() || ($("#pgId").placeholder);
+  const n = Number($("#pgNum").value) || 0;
+  try {
+    const p = await api.get(`/api/debug/page?id=${encodeURIComponent(id)}&page=${n}`);
+    $("#pageOut").textContent =
+      t("dev.pageInfo", { id, page: p.page + 1, pages: p.pages, max: p.maxLines }) + "\n\n" +
+      (p.lines.length
+        ? p.lines.map((l) => `${String(l.w).padStart(3)}px │ ${l.t}`).join("\n")
+        : t("dev.noLines"));
+  } catch (err) {
+    $("#pageOut").textContent = t("dev.pageError", { error: err.message });
+  }
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+}
+
+$("#reboot").onclick = async () => {
+  if (!confirm(t("cfg.rebootConfirm"))) return;
+  $("#cfgNote").textContent = t("cfg.rebooting");
+  // We don't wait for a response: the device reboots and drops the connection.
+  fetch("/api/system/reboot", { method: "POST", headers: api.headers() }).catch(() => {});
+};
+
+applyI18n();
+setupLangSwitcher();
+refreshStatus();
+refreshBooks();
+loadConfig();
+setInterval(refreshStatus, 15000);
+</script>
+</body>
+</html>
