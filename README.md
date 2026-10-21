@@ -1,5 +1,3 @@
-# μbiblion
-
 ```
        _     _ _     _ _
       | |   (_) |   | (_)
@@ -34,6 +32,9 @@ both native. The device only ever handles UTF-8 text.
 
 ## Hardware
 
+[WeAct Studio 1.54" Black&White](https://github.com/WeActStudio/WeActStudio.EpaperModule) module
+(SSD1681 controller). Wiring matches the official ESP8266 example:
+
 Both wiring charts are generated from `src/pins.h` by `tools/make_pinout.py`
 (don't edit the SVGs by hand):
 
@@ -42,31 +43,6 @@ Both wiring charts are generated from `src/pins.h` by `tools/make_pinout.py`
 | ![alt NodeMCU wiring](docs/pinout-nodemcuv2.svg) | ![alt ESP32 wiring](docs/pinout-esp32dev.svg) |
 
 ### ESP8266 (NodeMCU v3)
-
-[WeAct Studio 1.54" Black&White](https://github.com/WeActStudio/WeActStudio.EpaperModule) module
-(SSD1681 controller). Wiring matches the official ESP8266 example:
-
-| e-paper | GPIO | NodeMCU |
-|---|---|---|
-| BUSY | 16 | D0 |
-| RST | 5 | D1 |
-| DC | 4 | D2 |
-| CS | 15 | D8 |
-| SCK | 14 | D5 |
-| SDA (MOSI) | 13 | D7 |
-| VCC | 3V3 | 3V3 |
-| GND | GND | GND |
-
-All four buttons go **from the ESP's pin to GND**, no resistors: the internal pull-up is used.
-
-| Button | GPIO | NodeMCU |
-|---|---|---|
-| PREV | 12 | D6 |
-| NEXT | 0 | D3 |
-| OK | 3 | RX |
-| BACK | 2 | D4 |
-
-Three details worth respecting:
 
 - **GPIO0 (D3) and GPIO2 (D4) are boot-strapping pins** and must be high at reset. The internal
   pull-up keeps them there; it only fails if that button is held down during reset.
@@ -79,28 +55,6 @@ Three details worth respecting:
 `A0` is left free for measuring the battery once the build moves to LiPo.
 
 ### ESP32 (DevKitC / NodeMCU-32S, 4MB)
-
-Same WeAct display on the VSPI bus (SCK/MOSI are its defaults, no SPI.begin() pins needed):
-
-| e-paper | Signal | GPIO |
-|---|---|---|
-| BUSY | EPD_BUSY | 17 |
-| RST | EPD_RST | 16 |
-| DC | EPD_DC | 4 |
-| CS | EPD_CS | 5 |
-| SCK | EPD_SCK | 18 |
-| SDA (MOSI) | EPD_MOSI | 23 |
-| VCC | 3V3 | 3V3 |
-| GND | GND | GND |
-
-Buttons keep the same scheme (pin to GND, internal pull-up) on non-strapping GPIOs:
-
-| Button | Signal | GPIO |
-|---|---|---|
-| PREV | PIN_BTN_PREV | 13 |
-| NEXT | PIN_BTN_NEXT | 14 |
-| OK | PIN_BTN_OK | 27 |
-| BACK | PIN_BTN_BACK | 25 |
 
 Differences from the ESP8266 worth knowing:
 
