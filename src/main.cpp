@@ -8,17 +8,18 @@
 //   webserver      -> WiFi on demand, REST API and the web UI
 //   i18n           -> on-device UI strings, up to five languages
 #include <Arduino.h>
-#include <ESP8266WiFi.h>
 
+#include "compat.h"
 #include "config.h"
 #include "display.h"
+
 #include "i18n.h"
 #include "input.h"
 #include "library.h"
 #include "menu.h"
 #include "paginator.h"
 #include "reader.h"
-#include "webserver.h"
+#include "webui.h"
 
 namespace {
 
@@ -37,6 +38,30 @@ uint8_t g_lastProgress = 255;
 const int16_t kBarX = Display::MARGIN_X;
 const int16_t kBarW = Display::WIDTH - 2 * Display::MARGIN_X;
 const int16_t kBarH = 12;
+
+#if UBIBLION_DEV && defined(ARDUINO_ARCH_ESP32)
+// --- loop-stall watchdog (diagnostics only, ESP32 dev builds) ---
+// The e-paper and WiFi code can block inside loop() and, because ICMP
+// replies never touch it, the device keeps answering ping while the web
+// server is silently dead (that's how the first on-hardware freeze showed
+// up). This FreeRTOS task sits on the other core and shouts on serial when
+// loop() stops making progress. It never restarts anything: the point is a
+// traceable stall, not a reboot that hides the bug.
+volatile uint32_t g_loopTick = 0;
+
+void stallWatcher(void* arg) {
+  (void)arg;
+  uint32_t prev = 0;
+  while (true) {
+    vTaskDelay(pdMS_TO_TICKS(3000));
+    const uint32_t tick = g_loopTick;
+    if (tick == prev && tick != 0) {
+      Serial.printf("[wdt] loop stalled for %u ms (last tick at %u)\n", millis() - tick, tick);
+    }
+    prev = tick;
+  }
+}
+#endif
 
 void showMessage(const String& text) {
   g_state = ST_MESSAGE;
@@ -199,6 +224,9 @@ void toggleWifi() {
                 I18n::t(I18n::STR_CONNECTING));
   Display::flushFull();
   WebUI::begin();
+#if UBIBLION_DEV
+  Serial.println("[boot] wifi up, drawing wifi screen");
+#endif
   g_state = ST_WIFI;
   drawWifi();
 }
@@ -321,16 +349,21 @@ void splash() {
 }  // namespace
 
 void setup() {
-  // TX_ONLY frees up GPIO3 (RX) for the OK button.
-  Serial.begin(115200, SERIAL_8N1, SERIAL_TX_ONLY);
+  // On the ESP8266, TX-only frees up GPIO3 (RX) for the OK button; the
+  // ESP32 keeps the port full-duplex.
+  ubSerialBegin();
   Serial.println();
   Serial.println(F("[boot] ubiblion " UBIBLION_VERSION));
 
   // The radio starts off: it only comes on when actually needed.
   WiFi.persistent(false);
-  WiFi.mode(WIFI_OFF);
-  WiFi.forceSleepBegin();
-  delay(1);
+  ubWiFiRadioOff();
+
+#if UBIBLION_DEV && defined(ARDUINO_ARCH_ESP32)
+  // Pinned to core 0: loopTask (and everything it might block) runs on core
+  // 1, so this watcher keeps printing even while core 1 is wedged.
+  xTaskCreatePinnedToCore(stallWatcher, "stallWatch", 2048, nullptr, 1, nullptr, 0);
+#endif
 
   Library::begin();
   Config::begin();
@@ -343,6 +376,9 @@ void setup() {
 
   splash();
   delay(600);
+#if UBIBLION_DEV
+  Serial.println("[boot] splash done");
+#endif
 
   const String& current = Config::get().currentBook;
   uint8_t wifiRule = Config::get().wifiOnBoot;
@@ -364,6 +400,9 @@ void setup() {
 }
 
 void loop() {
+#if UBIBLION_DEV && defined(ARDUINO_ARCH_ESP32)
+  g_loopTick = millis();
+#endif
   Input::Event ev;
   if (Input::poll(ev)) {
     Serial.printf("[in] %s%s\n", Input::name(ev.button), ev.longPress ? " (long)" : "");

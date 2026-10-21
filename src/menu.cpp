@@ -4,7 +4,7 @@
 #include "display.h"
 #include "i18n.h"
 #include "library.h"
-#include "webserver.h"
+#include "webui.h"
 
 namespace Menu {
 namespace {

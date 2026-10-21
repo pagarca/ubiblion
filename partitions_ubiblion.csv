@@ -1,0 +1,23 @@
+# ubiblion - partition table for a 4MB ESP32 (esp32dev).
+#
+# Book storage gets the lion's share, mirroring the ESP8266's
+# eagle.flash.4m3m.ld split (~1MB program + ~3MB filesystem). The app
+# partition is 1MB: the firmware is ~950KB there (WiFi stack linked in), so
+# there's headroom but it does run at ~90% -- if a build ever outgrows it,
+# trim 256KB off the littlefs row below (it fits in the 4MB either way) and
+# update the offset.
+#
+# The books partition is named "spiffs" on purpose: the arduino-esp32 core's
+# LittleFS class mounts by that label by default (see Library::begin(),
+# which never passes one), and the data subtype "spiffs" doubles as the
+# "this-is-the-filesystem-partition" flag for the tooling that uploads
+# `pio run -t uploadfs`.
+#
+# nvs is not optional: it backs the emulated EEPROM in config.cpp, where the
+# WiFi credentials survive `pio run -t uploadfs`.
+#
+# Name,   Type, SubType, Offset,  Size, Flags
+nvs,      data, nvs,     0x9000,  0x5000,
+otadata,  data, ota,     0xe000,  0x2000,
+app0,     app,  factory, 0x10000, 0x100000,
+spiffs,   data, spiffs,  0x110000,0x2F0000,

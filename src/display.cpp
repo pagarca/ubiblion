@@ -237,10 +237,14 @@ void flush(bool partial) {
 }
 
 void flushFull() {
+#if UBIBLION_DEV
+  Serial.println("[disp] full flush start");
+#endif
   g_sincefull = 0;
   epd.display(false);
 #if UBIBLION_DEV
   g_refreshes++;
+  Serial.printf("[disp] full flush done (%u)\n", g_refreshes);
 #endif
 }
 

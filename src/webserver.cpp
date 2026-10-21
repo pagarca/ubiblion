@@ -1,12 +1,9 @@
-#include "webserver.h"
+#include "webui.h"
 
 #include <ArduinoJson.h>
-#include <ESP8266WebServer.h>
-#include <ESP8266WiFi.h>
-#include <ESP8266mDNS.h>
 #include <LittleFS.h>
-#include <uri/UriBraces.h>
 
+#include "compat.h"
 #include "config.h"
 #include "display.h"
 #include "i18n.h"
@@ -16,7 +13,7 @@
 namespace WebUI {
 namespace {
 
-ESP8266WebServer g_server(80);
+UBWebServer g_server(80);
 bool g_active = false;
 bool g_ap = false;
 bool g_libraryChanged = false;
@@ -511,8 +508,11 @@ void routes() {
 #endif
   g_server.onNotFound(handleNotFound);
 
-  // Variadic overload: the classic one (array + size) is ambiguous with it.
-  g_server.collectHeaders(F("Content-Length"), F("X-Api-Key"));
+  // Two collected headers via the shim: the classic array+size overload is
+  // ambiguous on the ESP8266 core, and the ESP32 one doesn't take variadics
+  // with F() strings the same way. NodeMCU/i18n: none of this touches RAM
+  // beyond the two tiny String copies compat.h makes.
+  ubCollectHeaders(g_server, "Content-Length", "X-Api-Key");
 }
 
 bool connectStation() {
@@ -540,12 +540,21 @@ void startAccessPoint() {
 
 void begin() {
   if (g_active) return;
-  WiFi.forceSleepWake();
-  delay(1);
+  ubWiFiRadioWake();
   WiFi.persistent(false);
   g_ap = false;
 
-  if (!connectStation()) startAccessPoint();
+  // A busy router occasionally doesn't hand out an association within one
+  // 15 s window (seen once on real hardware, which dumped the reader into
+  // AP mode with no obvious way back). Retry once before giving up.
+  if (!connectStation()) {
+#if UBIBLION_DEV
+    Serial.printf("[web] STA not up after %u ms, retrying once\n", kConnectTimeoutMs);
+#endif
+    WiFi.disconnect();
+    delay(100);
+    if (!connectStation()) startAccessPoint();
+  }
 
   if (MDNS.begin(Config::get().hostname)) MDNS.addService("http", "tcp", 80);
   routes();
@@ -560,9 +569,7 @@ void stop() {
   MDNS.end();
   WiFi.softAPdisconnect(true);
   WiFi.disconnect(true);
-  WiFi.mode(WIFI_OFF);
-  WiFi.forceSleepBegin();
-  delay(1);
+  ubWiFiRadioOff();
   g_active = false;
   g_ap = false;
   Serial.println(F("[web] stopped"));
@@ -573,7 +580,7 @@ bool isActive() { return g_active; }
 void loop() {
   if (!g_active) return;
   g_server.handleClient();
-  MDNS.update();
+  ubMDNSUpdate();
 }
 
 bool isAP() { return g_ap; }

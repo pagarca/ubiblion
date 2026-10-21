@@ -34,9 +34,20 @@ void begin() {
 
 void refresh() {
   g_count = 0;
+#ifdef ARDUINO_ARCH_ESP32
+  // No openDir() in the ESP32 core: open the directory and walk it.
+  File dir = LittleFS.open(kDir);
+  if (!dir) return;
+  File f;
+  while ((f = dir.openNextFile()) && g_count < MAX_BOOKS) {
+    String name = f.name();  // e.g. "b0001.json", with or without the dir
+    const int slash = name.lastIndexOf('/');
+    if (slash >= 0) name.remove(0, slash + 1);
+#else
   Dir dir = LittleFS.openDir(kDir);
   while (dir.next() && g_count < MAX_BOOKS) {
     String name = dir.fileName();  // e.g. "b0001.json"
+#endif
     if (!name.endsWith(".json")) continue;
     name.remove(name.length() - 5);
     if (name.length() >= ID_LEN) continue;
@@ -123,24 +134,32 @@ String nextId() {
 }
 
 uint32_t totalBytes() {
+#ifdef ARDUINO_ARCH_ESP32
+  return LittleFS.totalBytes();
+#else
   FSInfo info;
   LittleFS.info(info);
   return info.totalBytes;
+#endif
 }
 
 uint32_t usedBytes() {
+#ifdef ARDUINO_ARCH_ESP32
+  return LittleFS.usedBytes();
+#else
   FSInfo info;
   LittleFS.info(info);
   return info.usedBytes;
+#endif
 }
 
 uint32_t freeBytes() {
-  FSInfo info;
-  LittleFS.info(info);
   // Safety margin: LittleFS needs some free blocks for its own metadata.
   const uint32_t reserved = 16 * 1024;
-  if (info.usedBytes + reserved >= info.totalBytes) return 0;
-  return info.totalBytes - info.usedBytes - reserved;
+  const uint32_t total = totalBytes();
+  const uint32_t used = usedBytes();
+  if (used + reserved >= total) return 0;
+  return total - used - reserved;
 }
 
 }  // namespace Library

@@ -1,8 +1,29 @@
-# ubiblion
+# μbiblion
 
-A homemade ebook reader: an **ESP8266 (NodeMCU v3)** with a **WeAct Studio 1.54" e-paper display**
-(200x200, SSD1681) and four buttons. Books are uploaded over WiFi from the browser or with `curl`,
-and stored on the internal flash.
+```
+       _     _ _     _ _
+      | |   (_) |   | (_)
+ _   _| |__  _| |__ | |_  ___  _ __
+| | | | '_ \| | '_ \| | |/ _ \| '_ \
+| |_| | |_) | | |_) | | | (_) | | | |
+| __,_|_.__/|_|_.__/|_|_|\___/|_| |_|
+| | μ (mu, "micro") + βιβλίον (biblion, "book")
+|_| a homemade ebook reader: ESP8266 / ESP32 + e-paper
+
+```
+
+A homemade ebook reader on an **e-paper display** (a WeAct Studio 1.54",
+200x200, SSD1681) with four buttons. Books are uploaded over WiFi from the
+browser or with `curl`, and stored on the internal flash. Note that code,
+hostnames and passwords keep the ASCII spelling (`UBIBLION_*` flags,
+`partitions_ubiblion.csv`, `ubiblion.local`) -- only the human-facing name
+carries the μ.
+
+It runs on two build targets: the original **ESP8266 (NodeMCU v3)** and an
+**ESP32** (DevKitC / NodeMCU-32S with a WROOM-32, 4MB). Everything else --
+the firmware logic, the web UI, the library format -- is identical; only the
+pin map and a handful of core APIs differ (`src/compat.h` keeps both behind
+one interface).
 
 The trick behind the whole project: the ESP8266 doesn't have the RAM to decompress an EPUB (the
 deflate window alone is 32KB, and there's only ~40KB of free heap here total), so **the EPUB gets
@@ -13,7 +34,14 @@ both native. The device only ever handles UTF-8 text.
 
 ## Hardware
 
-### Display
+Both wiring charts are generated from `src/pins.h` by `tools/make_pinout.py`
+(don't edit the SVGs by hand):
+
+| NodeMCU v3 | ESP32 DevKitC |
+|---|---|
+| ![alt NodeMCU wiring](docs/pinout-nodemcuv2.svg) | ![alt ESP32 wiring](docs/pinout-esp32dev.svg) |
+
+### ESP8266 (NodeMCU v3)
 
 [WeAct Studio 1.54" Black&White](https://github.com/WeActStudio/WeActStudio.EpaperModule) module
 (SSD1681 controller). Wiring matches the official ESP8266 example:
@@ -29,9 +57,7 @@ both native. The device only ever handles UTF-8 text.
 | VCC | 3V3 | 3V3 |
 | GND | GND | GND |
 
-### Buttons
-
-All four go **from the ESP's pin to GND**, no resistors: the internal pull-up is used.
+All four buttons go **from the ESP's pin to GND**, no resistors: the internal pull-up is used.
 
 | Button | GPIO | NodeMCU |
 |---|---|---|
@@ -52,6 +78,44 @@ Three details worth respecting:
 
 `A0` is left free for measuring the battery once the build moves to LiPo.
 
+### ESP32 (DevKitC / NodeMCU-32S, 4MB)
+
+Same WeAct display on the VSPI bus (SCK/MOSI are its defaults, no SPI.begin() pins needed):
+
+| e-paper | Signal | GPIO |
+|---|---|---|
+| BUSY | EPD_BUSY | 17 |
+| RST | EPD_RST | 16 |
+| DC | EPD_DC | 4 |
+| CS | EPD_CS | 5 |
+| SCK | EPD_SCK | 18 |
+| SDA (MOSI) | EPD_MOSI | 23 |
+| VCC | 3V3 | 3V3 |
+| GND | GND | GND |
+
+Buttons keep the same scheme (pin to GND, internal pull-up) on non-strapping GPIOs:
+
+| Button | Signal | GPIO |
+|---|---|---|
+| PREV | PIN_BTN_PREV | 13 |
+| NEXT | PIN_BTN_NEXT | 14 |
+| OK | PIN_BTN_OK | 27 |
+| BACK | PIN_BTN_BACK | 25 |
+
+Differences from the ESP8266 worth knowing:
+
+- The serial port stays **full-duplex**: GPIO3 is not a button here, so nothing is ever stolen and
+  logs work both ways.
+- Build with the same environments suffixed `-esp32` (`esp32dev`, `dev_esp32`, see below); the flash
+  is split by `partitions_ubiblion.csv` (1MB app + ~2.94MB LittleFS). The binary weighs ~950KB, so
+  the app partition runs at ~90% — it fits, but if a future build outgrows 1MB, trim 256KB off the
+  littlefs row in the CSV first.
+- GPIO16/17 are used by the display: fine on the WROOM-32 dev kits, not on a WROVER (they're the
+  PSRAM pins).
+- GPIO12 is left free but straps the flash voltage at reset — keep a button on it *unpressed* at
+  boot, or better, don't wire it. All the 34–39 input-only pins are free for the battery ADC (they
+  have no internal pull-ups, so not for buttons).
+
 ---
 
 ## Building and flashing
@@ -68,19 +132,36 @@ And then, once, the web UI (the contents of `data/`):
 pio run -t uploadfs
 ```
 
+By default that builds `nodemcuv2` (the ESP8266). The other environments: `-e dev` (ESP8266
+development build, see "Development mode") and, for the ESP32, `-e esp32dev` / `-e dev_esp32`:
+
+```bash
+pio run -e esp32dev -t upload
+```
+
 > `uploadfs` rewrites **the entire** filesystem, including the books and `config.json`. Only use it
 > when you change the web UI, and re-upload your books afterward. WiFi credentials do survive: they're
-> also kept in EEPROM, which lives outside LittleFS, and get restored automatically at boot.
+> also kept in EEPROM (in the NVS partition on ESP32), which lives outside LittleFS, and get restored
+> automatically at boot.
 
-The 4MB flash is split into ~1MB of program and ~3MB of LittleFS (`eagle.flash.4m3m.ld`) -- see the
-comment above `board_build.ldscript` in `platformio.ini` for why giving the filesystem the lion's
-share costs nothing. That leaves room for a real library: a 300KB text file is around 600 pages, and
-the unabridged *Don Quijote* (2.1MB of plain text, 11475 pages) uses well under half the free space.
+The 4MB flash is split into ~1MB of program and ~3MB of LittleFS on both targets -- via
+`eagle.flash.4m3m.ld` on the ESP8266 and `partitions_ubiblion.csv` on the ESP32 -- see the comment
+above `board_build.ldscript` in `platformio.ini` for why giving the filesystem the lion's share costs
+nothing. That leaves room for a real library: a 300KB text file is around 600 pages, and the
+unabridged *Don Quijote* (2.1MB of plain text, 11475 pages) uses well under half the free space.
 
 Tested on real NodeMCU v3 hardware: display, LittleFS, WiFi, REST API, uploading books from a 227KB
 sample up to the unabridged *Don Quijote* (2.1MB, 11475 pages), indexing, navigation and deletion. The
 only thing still unverified on hardware is the four physical buttons, since they aren't wired up yet;
 their logic has been exercised with development mode's virtual buttons.
+
+Also brought up and verified on real ESP32 hardware (DevKitC, WROOM-32): the display through the new
+pin map (splash, WiFi screen, full refreshes), the LittleFS partition, AP first boot and STA
+connection, the REST API (status, library, upload with in-place EPUB-less text indexing of 300+ pages,
+byte-exact book download), UTF-8 pagination with accents, and the development-mode screen mirror.
+Still pending there: wiring and exercising the four physical buttons. Until they're wired, the
+`dev_esp32` build is the safer resident firmware for that board, since it keeps WiFi reachable to
+serve the virtual-buttons mirror.
 
 Uploading a multi-megabyte book over WiFi to a single-core microcontroller genuinely takes a couple of
 minutes end to end (transfer + writing to flash + indexing); the web UI's `fetch()` has no built-in
@@ -115,10 +196,12 @@ to change.
 ## Development mode
 
 ```bash
-pio run -e dev -t upload
+pio run -e dev -t upload        # ESP8266
+pio run -e dev_esp32 -t upload  # ESP32
 ```
 
-The `dev` environment compiles the same firmware with `-DUBIBLION_DEV=1` and adds:
+The `dev`/`dev_esp32` environments compile the same firmware with
+`-DUBIBLION_DEV=1` and add:
 
 - **WiFi always on at boot**, ignoring `wifiOnBoot`. It's also the rescue path if a device becomes
   unreachable (with books loaded and no buttons, there's otherwise no way to turn the network back on).
@@ -217,7 +300,8 @@ python tools/upload_book.py --list
 
 ```
 src/
-  pins.h        pin assignments
+  pins.h        pin assignments (one conditional block per target)
+  compat.h      the only place that knows which core it's on (ESP8266/ESP32)
   display.*     GxEPD2 + U8g2 (UTF-8), partial/full refresh policy
   i18n.*        on-device UI strings, up to six languages (PROGMEM tables)
   input.*       4 buttons, 25ms debouncing, long press
@@ -225,14 +309,24 @@ src/
   paginator.*   line wrapping and the page index
   reader.*      reading screen and deferred progress save
   menu.*        library, settings and delete confirmation
-  webserver.*   WiFi on demand, REST API and the web UI
+  webserver.cpp WiFi on demand, REST API and the web UI
+  webui.h       (kept out of webserver.h: on Windows/NTFS -Isrc would shadow
+                the ESP32 core's own WebServer.h header)
   main.cpp      state machine
 data/
   index.template.html  web UI source: HTML/CSS/JS with data-i18n hooks
   i18n/*.json          one translation file per language
   index.html           generated by tools/build_web.py -- not edited directly
-tools/          console client, layout tests, web build script
+tools/          console client, layout tests, web build script, pinout charts
+partitions_ubiblion.csv  ESP32 flash split (1MB app + ~2.94MB LittleFS)
+docs/           generated pinout SVGs (make_pinout.py)
 ```
+
+Everything targets whatever core runs it through `compat.h`; modules like
+`paginator`, `reader`, `menu` or `i18n` never branch on the chip. Where the
+cores genuinely differ (WebServer/mDNS classes, radio power mgmt, FS
+directory walking, serial RX pin) the divergence is absorbed in `compat.h`
+and `library.cpp`'s two `#ifdef` blocks.
 
 **Pagination.** Over plain text you can't go back a page without recomputing the line wrap from
 scratch, so adding a book builds `/books/<id>.idx`: an 8-byte header followed by the starting offset
