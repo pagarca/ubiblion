@@ -187,10 +187,10 @@ With no saved credentials, the device brings up an access point when WiFi is tur
 
 ## Usage
 
-Printable A4 user manuals are available in [Spanish](docs/manuales/manual-usuario-ubiblion.pdf),
-[English](docs/manuales/manual-ubiblion-en.pdf), [French](docs/manuales/manual-ubiblion-fr.pdf),
-[German](docs/manuales/manual-ubiblion-de.pdf), [Italian](docs/manuales/manual-ubiblion-it.pdf),
-and [Catalan](docs/manuales/manual-ubiblion-ca.pdf).
+Printable A4 user manuals are available in [English](docs/manuals/manual-ubiblion-en.pdf),
+[Spanish](docs/manuals/manual-ubiblion-es.pdf), [French](docs/manuals/manual-ubiblion-fr.pdf),
+[German](docs/manuals/manual-ubiblion-de.pdf), [Italian](docs/manuals/manual-ubiblion-it.pdf),
+and [Catalan](docs/manuals/manual-ubiblion-ca.pdf).
 
 | Button | Short press | Long press (>0.6s) |
 |---|---|---|
