@@ -56,6 +56,9 @@ Both wiring charts are generated from `src/pins.h` by `tools/make_pinout.py`
 
 ### ESP32 (DevKitC / NodeMCU-32S, 4MB)
 
+The firmware expects LOW at rest and HIGH on press. The button circuit must
+hold each pin low when released because the firmware enables the internal pull-up.
+
 Differences from the ESP8266 worth knowing:
 
 - The serial port stays **full-duplex**: GPIO3 is not a button here, so nothing is ever stolen and

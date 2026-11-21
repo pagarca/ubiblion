@@ -140,6 +140,9 @@ def svg_for(board, pins):
     body = []
     y = title_h
     for section, order in SECTIONS.items():
+        section_title = SECTION_TITLES[section]
+        if section == "buttons" and board == "esp32dev":
+            section_title = "buttons (LOW at rest, HIGH on press)"
         rows = [(n, pins[n]) for n in order if n in pins]
         used.update(n for n, _ in rows)
         if not rows:
@@ -149,7 +152,7 @@ def svg_for(board, pins):
             f'<rect x="{pad}" y="{y}" width="{width - 2*pad}" height="{row_h}" fill="#1b1f24"/>')
         body.append(
             f'<text x="{pad+12}" y="{y+row_h-8}" font-family="DejaVu Sans, Arial, sans-serif" '
-            f'font-size="13" font-weight="bold" fill="#ffffff">{esc(SECTION_TITLES[section])}</text>')
+            f'font-size="13" font-weight="bold" fill="#ffffff">{esc(section_title)}</text>')
         y += row_h
         # column header
         body.append(

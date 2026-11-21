@@ -1,7 +1,7 @@
 // Reads the 4 buttons with debouncing and long-press detection.
 //
-// All four pins use INPUT_PULLUP and the buttons go to GND, so the resting
-// level is high. A long press fires as soon as the threshold is reached (not
+// Buttons are active high on ESP32 and active low on ESP8266.
+// A long press fires as soon as the threshold is reached (not
 // on release), so the user notices the response on screen; a short press
 // fires on release.
 #pragma once

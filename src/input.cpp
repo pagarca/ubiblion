@@ -8,6 +8,12 @@ namespace {
 const uint8_t kPins[BTN_COUNT] = {PIN_BTN_PREV, PIN_BTN_NEXT, PIN_BTN_OK, PIN_BTN_BACK};
 const char* const kNames[BTN_COUNT] = {"PREV", "NEXT", "OK", "BACK"};
 
+#ifdef ARDUINO_ARCH_ESP32
+constexpr int kPressedLevel = HIGH;
+#else
+constexpr int kPressedLevel = LOW;
+#endif
+
 struct State {
   bool stable = false;      // true = pressed
   bool lastRaw = false;
@@ -61,7 +67,7 @@ bool poll(Event& out) {
 
   for (uint8_t i = 0; i < BTN_COUNT; i++) {
     State& s = g_state[i];
-    const bool raw = digitalRead(kPins[i]) == LOW;
+    const bool raw = digitalRead(kPins[i]) == kPressedLevel;
 
     if (raw != s.lastRaw) {
       s.lastRaw = raw;

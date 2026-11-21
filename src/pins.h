@@ -10,9 +10,9 @@
 
 // ESP32 DevKitC / NodeMCU-32S (WROOM-32, 4MB, 30-pin dev board).
 //
-// The display rides the VSPI bus with its default SCK/MOSI. The buttons go
-// from pin to GND with the internal pull-up, exactly as on the ESP8266 --
-// none of these four are boot-strapping pins, and the serial port stays
+// The display rides the VSPI bus with its default SCK/MOSI. The button
+// circuit holds each pin low at rest and presents a high level on press.
+// None of these four are boot-strapping pins, and the serial port stays
 // full-duplex (no GPIO3-as-button trick needed here).
 //
 // Free afterwards: GPIO12 (straps flash voltage at reset, keep unpressed at
@@ -25,7 +25,7 @@ static const uint8_t PIN_EPD_RST = 16;   // GPIO16
 static const uint8_t PIN_EPD_DC = 4;     // GPIO4
 static const uint8_t PIN_EPD_CS = 5;     // GPIO5
 
-// --- buttons (to GND, internal pull-up) ---
+// --- buttons (active high, internal pull-up retained) ---
 static const uint8_t PIN_BTN_PREV = 13;  // GPIO13
 static const uint8_t PIN_BTN_NEXT = 14;  // GPIO14
 static const uint8_t PIN_BTN_OK = 27;    // GPIO27
