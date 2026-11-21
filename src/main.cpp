@@ -265,6 +265,9 @@ void handleReading(const Input::Event& ev) {
 void handleMenu(const Input::Event& ev) {
   char id[Library::ID_LEN] = {0};
   switch (Menu::handle(ev, id, sizeof(id))) {
+    case Menu::ACT_MOVE_SELECTION:
+      Menu::draw(true);
+      break;
     case Menu::ACT_REDRAW:
       Menu::draw();
       break;

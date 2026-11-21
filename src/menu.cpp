@@ -106,7 +106,7 @@ String settingsLabel(SettingsItem item) {
 uint8_t libraryRows() { return Library::count() + 1; }
 bool isSettingsRow(uint8_t index) { return index == Library::count(); }
 
-void drawLibrary() {
+void drawLibrary(bool partial) {
   const uint8_t total = libraryRows();
   clampScroll(total);
 
@@ -143,10 +143,10 @@ void drawLibrary() {
   char count[24];
   snprintf(count, sizeof(count), "%u/%u", g_sel + 1, total);
   Display::footer(I18n::t(I18n::STR_OK_OPEN_LONG_DELETE), count);
-  Display::flushFull();
+  Display::flush(partial);
 }
 
-void drawSettings() {
+void drawSettings(bool partial) {
   const uint8_t total = settingsRowCount();
   clampScroll(total);
   Display::clear();
@@ -156,7 +156,7 @@ void drawSettings() {
     drawRow(i, settingsLabel(settingsItemAt(g_top + i)), (g_top + i) == g_sel);
   }
   Display::footer(I18n::t(I18n::STR_OK_CHANGE), "");
-  Display::flushFull();
+  Display::flush(partial);
 }
 
 void drawConfirmDelete() {
@@ -186,13 +186,13 @@ Action handleLibrary(const Input::Event& ev, char* outId, size_t outIdLen) {
     case Input::BTN_PREV:
       if (g_sel > 0) {
         g_sel--;
-        return ACT_REDRAW;
+        return ACT_MOVE_SELECTION;
       }
       return ACT_NONE;
     case Input::BTN_NEXT:
       if (g_sel + 1 < total) {
         g_sel++;
-        return ACT_REDRAW;
+        return ACT_MOVE_SELECTION;
       }
       return ACT_NONE;
     case Input::BTN_OK:
@@ -225,13 +225,13 @@ Action handleSettings(const Input::Event& ev, char* outId, size_t outIdLen) {
     case Input::BTN_PREV:
       if (g_sel > 0) {
         g_sel--;
-        return ACT_REDRAW;
+        return ACT_MOVE_SELECTION;
       }
       return ACT_NONE;
     case Input::BTN_NEXT:
       if (g_sel + 1 < total) {
         g_sel++;
-        return ACT_REDRAW;
+        return ACT_MOVE_SELECTION;
       }
       return ACT_NONE;
     case Input::BTN_BACK:
@@ -318,13 +318,13 @@ void openSettings() {
 
 bool isOpen() { return g_screen != SCR_NONE; }
 
-void draw() {
+void draw(bool partial) {
   switch (g_screen) {
     case SCR_LIBRARY:
-      drawLibrary();
+      drawLibrary(partial);
       break;
     case SCR_SETTINGS:
-      drawSettings();
+      drawSettings(partial);
       break;
     case SCR_CONFIRM_DELETE:
       drawConfirmDelete();

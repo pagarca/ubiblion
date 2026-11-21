@@ -16,13 +16,14 @@ enum Action : uint8_t {
   ACT_BACK_TO_READER,  // return to reading (if a book is open)
   ACT_TOGGLE_WIFI,
   ACT_FONT_CHANGED,  // layout changed: whatever gets opened needs reindexing
+  ACT_MOVE_SELECTION,
 };
 
 void openLibrary();
 void openSettings();
 bool isOpen();
 
-void draw();
+void draw(bool partial = false);
 Action handle(const Input::Event& ev, char* outId, size_t outIdLen);
 
 }  // namespace Menu
