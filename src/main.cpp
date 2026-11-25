@@ -6,7 +6,8 @@
 //   paginator      -> page index and line wrapping
 //   reader/menu    -> screens
 //   webserver      -> WiFi on demand, REST API and the web UI
-//   i18n           -> on-device UI strings, up to five languages
+//   power          -> sleeping between button presses
+//   i18n           -> on-device UI strings, up to six languages
 #include <Arduino.h>
 
 #include "compat.h"
@@ -18,6 +19,7 @@
 #include "library.h"
 #include "menu.h"
 #include "paginator.h"
+#include "power.h"
 #include "reader.h"
 #include "webui.h"
 
@@ -148,7 +150,7 @@ void drawWifi() {
       Display::text(Display::MARGIN_X, y, line);
     }
   }
-  Display::footer(I18n::t(I18n::STR_BACK_OFF_OK_CONTINUE), "");
+  Display::footer(I18n::t(I18n::STR_BACK_WIFI_OFF), "");
   Display::flushFull();
 }
 
@@ -210,7 +212,11 @@ void onIndexingFinished() {
 void toggleWifi() {
   if (WebUI::isActive()) {
     WebUI::stop();
-    if (Reader::isOpen()) {
+    if (Paginator::indexing()) {
+      // An upload is still being indexed: show its progress.
+      g_state = ST_INDEXING;
+      drawIndexing(true);
+    } else if (Reader::isOpen()) {
       g_state = ST_READING;
       Reader::draw(false);
     } else {
@@ -324,13 +330,17 @@ void handleIndexing(const Input::Event& ev) {
   }
 }
 
+// WiFi only lives as long as its screen: leaving it turns the radio off, so it
+// can never stay on in the background draining the battery.
 void handleWifi(const Input::Event& ev) {
   if (ev.button == Input::BTN_BACK) {
     toggleWifi();  // turns it off and goes back
     return;
   }
+#if UBIBLION_DEV
   if (ev.button == Input::BTN_OK) {
-    // Leaves WiFi on and goes back to reading or to the library.
+    // Development only, so the web panel can drive the other screens: leaves
+    // WiFi on and goes back to reading or to the library.
     if (Reader::isOpen()) {
       g_state = ST_READING;
       Reader::draw(false);
@@ -338,6 +348,7 @@ void handleWifi(const Input::Event& ev) {
       goMenu();
     }
   }
+#endif
 }
 
 void splash() {
@@ -352,6 +363,8 @@ void splash() {
 }  // namespace
 
 void setup() {
+  Power::begin();
+
   // On the ESP8266, TX-only frees up GPIO3 (RX) for the OK button; the
   // ESP32 keeps the port full-duplex.
   ubSerialBegin();
@@ -451,5 +464,9 @@ void loop() {
   }
 
   Reader::tick();
+
+  if (!WebUI::isActive() && !Paginator::indexing() && Input::quiet()) {
+    Power::sleep(Reader::msUntilSave());
+  }
   yield();
 }

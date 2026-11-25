@@ -28,6 +28,8 @@ void draw(bool partial);
 // Flushes progress to /books/<id>.json once there's been no activity for a
 // while.
 void tick();
+// Milliseconds until tick() has something to save; 0 if nothing is pending.
+uint32_t msUntilSave();
 void flushProgress();
 
 }  // namespace Reader

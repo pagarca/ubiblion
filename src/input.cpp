@@ -111,6 +111,18 @@ bool poll(Event& out) {
 
 bool isPressed(Button b) { return b < BTN_COUNT && g_state[b].stable; }
 
+bool quiet() {
+#if UBIBLION_DEV
+  if (g_injectedCount) return false;
+#endif
+  for (uint8_t i = 0; i < BTN_COUNT; i++) {
+    const State& s = g_state[i];
+    if (s.stable || s.lastRaw || digitalRead(kPins[i]) == kPressedLevel) return false;
+    if (millis() - s.lastChange < DEBOUNCE_MS) return false;
+  }
+  return true;
+}
+
 uint32_t idleMillis() { return millis() - g_lastEvent; }
 
 const char* name(Button b) { return b < BTN_COUNT ? kNames[b] : "?"; }

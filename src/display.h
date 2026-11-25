@@ -79,6 +79,9 @@ void flushWindow(int16_t x, int16_t y, int16_t w, int16_t h);
 
 void setFullRefreshEvery(uint8_t pages);
 void hibernate();
+// Switches the panel's drive voltages off; the next refresh turns them back
+// on by itself. Cheap to call when they are already off.
+void powerOff();
 
 #if UBIBLION_DEV
 // --- development mode ---

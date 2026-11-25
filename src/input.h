@@ -36,6 +36,10 @@ bool poll(Event& out);
 
 bool isPressed(Button b);
 
+// True when every button is released and settled, with nothing left to report:
+// polling can stop until a pin changes.
+bool quiet();
+
 // Milliseconds since the last event; used by the deferred progress save.
 uint32_t idleMillis();
 

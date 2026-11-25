@@ -256,6 +256,8 @@ void setFullRefreshEvery(uint8_t pages) { g_fullRefreshEvery = pages; }
 
 void hibernate() { epd.hibernate(); }
 
+void powerOff() { epd.powerOff(); }
+
 #if UBIBLION_DEV
 uint8_t mirrorCount() { return g_mirrorN; }
 const String& mirrorText(uint8_t index) {

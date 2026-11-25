@@ -102,6 +102,12 @@ void tick() {
   flushProgress();
 }
 
+uint32_t msUntilSave() {
+  if (!g_open || !g_dirty) return 0;
+  const uint32_t idle = Input::idleMillis();
+  return idle < kSaveIdleMs ? kSaveIdleMs - idle : 1;
+}
+
 void flushProgress() {
   if (!g_open || !g_dirty) return;
   Library::BookMeta stored;
