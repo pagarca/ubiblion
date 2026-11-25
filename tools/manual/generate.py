@@ -47,7 +47,7 @@ def header(page, title, subtitle):
     text(42, 104, title, 34, "Bold")
     text(43, 131, subtitle, 12, color=MUTED)
     rule(42, 781, 553)
-    text(42, 801, "μbiblion  ·  Firmware 1.0.0", 9, color=MUTED)
+    text(42, 801, "μbiblion  ·  Firmware 1.1.0", 9, color=MUTED)
     text(519, 801, f"{page} / 2", 9, "Bold", MUTED)
 
 def key(x, y, label, width=51):
@@ -89,7 +89,7 @@ def cover():
 
     rule(42, 758, 553)
     text(43, 783, "GUÍA ILUSTRADA", 10, "Bold", MUTED)
-    text(442, 783, "Firmware 1.0.0", 10, color=MUTED)
+    text(442, 783, "Firmware 1.1.0", 10, color=MUTED)
     c.showPage()
 
 def back_cover():
