@@ -57,7 +57,7 @@
   "net.apiKeyPlaceholder": "leer = kein Schlüssel",
   "net.fullRefresh": "Vollständige Aktualisierung alle",
   "net.wifiOnBoot": "WLAN beim Start einschalten",
-  "net.wifiOnBoot0": "Nie (nur per Taste)",
+  "net.wifiOnBoot0": "Nie (nur über das Menü)",
   "net.wifiOnBoot1": "Nur wenn keine Bücher vorhanden sind",
   "net.wifiOnBoot2": "Immer",
   "net.language": "Sprache des Reader-Bildschirms",

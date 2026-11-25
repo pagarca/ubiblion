@@ -254,6 +254,11 @@ void flushWindow(int16_t x, int16_t y, int16_t w, int16_t h) {
 
 void setFullRefreshEvery(uint8_t pages) { g_fullRefreshEvery = pages; }
 
+void fullScreenImage(const uint8_t* bitmap) {
+  clear();
+  epd.drawBitmap(0, 0, bitmap, WIDTH, HEIGHT, GxEPD_BLACK);
+}
+
 void hibernate() { epd.hibernate(); }
 
 void powerOff() { epd.powerOff(); }

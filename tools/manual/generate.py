@@ -102,7 +102,7 @@ def back_cover():
         ("PREV", "Página anterior"),
         ("NEXT", "Página siguiente"),
         ("OK", "Biblioteca"),
-        ("BACK", "WiFi si lo mantienes pulsado"),
+        ("BACK", "Mantener: salvapantallas"),
     )
     for i, (button, action) in enumerate(shortcuts):
         x = 43 + (i % 2)*261
@@ -113,7 +113,7 @@ def back_cover():
 
     box(43, 467, 510, 151, white, INK)
     text(61, 497, "Para añadir un libro", 17, "Bold")
-    paragraph(61, 525, "Mantén BACK para encender el WiFi. Abre en el navegador la dirección que muestra el lector y elige el archivo EPUB o TXT.", 465, 13, 20)
+    paragraph(61, 525, "Enciende el WiFi desde Ajustes. Abre en el navegador la dirección que muestra el lector y elige el archivo EPUB o TXT.", 465, 13, 20)
     rule(61, 565, 535)
     text(61, 593, "Si aparece la red ubiblion, su clave es ubiblion.", 11, color=MUTED)
 
@@ -173,7 +173,7 @@ for i, (button, short, long) in enumerate((
     ("PREV", "Página anterior", "Retrocede 10 páginas"),
     ("NEXT", "Página siguiente", "Avanza 10 páginas"),
     ("OK", "Abre la Biblioteca", "Abre Ajustes"),
-    ("BACK", "Abre la Biblioteca", "Enciende o apaga el WiFi"),
+    ("BACK", "Abre la Biblioteca", "Muestra el salvapantallas"),
 )):
     y = 487 + i*32
     rule(54, y+5, 541)
@@ -183,7 +183,7 @@ for i, (button, short, long) in enumerate((
 
 box(42, 651, 511, 96, PALE)
 text(56, 673, "Ajustes y borrado", 12, "Bold")
-paragraph(56, 693, "En la Biblioteca, selecciona Ajustes... para cambiar la fuente o el idioma. Para borrar un libro, resáltalo y mantén OK. Confirma con OK o cancela con BACK.", 477, 11, 17)
+paragraph(56, 693, "En la Biblioteca, selecciona Ajustes... para cambiar la fuente o el idioma. Para borrar un libro, resáltalo y mantén OK. Confirma con OK o cancela con BACK. Cualquier botón sale del salvapantallas.", 477, 11, 17)
 c.showPage()
 
 header(2, "Añadir libros", "Envía archivos EPUB o TXT desde el navegador del móvil o del ordenador.")
@@ -212,7 +212,7 @@ text(59, 312, "Pantalla del lector", 10, "Bold", MUTED)
 text(275, 312, "Navegador del móvil u ordenador", 10, "Bold", MUTED)
 
 step(373, 1, "Enciende el WiFi del lector",
-     "Desde la Biblioteca o mientras lees, mantén pulsado BACK hasta que aparezca la pantalla WiFi.")
+     "En la Biblioteca, selecciona Ajustes... (o mantén OK mientras lees) y elige WiFi: encender.")
 step(449, 2, "Conéctate y abre la dirección",
      "Si el lector muestra AP: ubiblion, conéctate a esa red con la clave ubiblion. Abre en el navegador la dirección que aparece en la pantalla del lector.")
 step(525, 3, "Elige el archivo y espera",

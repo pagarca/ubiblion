@@ -7,6 +7,7 @@
 //   reader/menu    -> screens
 //   webserver      -> WiFi on demand, REST API and the web UI
 //   power          -> sleeping between button presses
+//   screensavers.h -> generated images (tools/make_screensavers.py)
 //   i18n           -> on-device UI strings, up to six languages
 #include <Arduino.h>
 
@@ -21,6 +22,7 @@
 #include "paginator.h"
 #include "power.h"
 #include "reader.h"
+#include "screensavers.h"
 #include "webui.h"
 
 namespace {
@@ -31,11 +33,14 @@ enum State : uint8_t {
   ST_INDEXING,
   ST_WIFI,
   ST_MESSAGE,
+  ST_SCREENSAVER,
 };
 
 State g_state = ST_MENU;
 char g_openAfterIndex[Library::ID_LEN] = {0};
 uint8_t g_lastProgress = 255;
+State g_stateBeforeSaver = ST_MENU;
+uint8_t g_nextSaver = 0;
 
 const int16_t kBarX = Display::MARGIN_X;
 const int16_t kBarW = Display::WIDTH - 2 * Display::MARGIN_X;
@@ -237,6 +242,27 @@ void toggleWifi() {
   drawWifi();
 }
 
+void showScreensaver() {
+  Reader::flushProgress();
+  g_stateBeforeSaver = g_state;
+  g_state = ST_SCREENSAVER;
+  Display::fullScreenImage(Screensavers::kImages[g_nextSaver]);
+  Display::flushFull();
+  g_nextSaver = (g_nextSaver + 1) % Screensavers::COUNT;
+}
+
+// Back to whatever was on screen. The menu keeps its own position.
+void leaveScreensaver() {
+  g_state = g_stateBeforeSaver;
+  if (g_state == ST_READING) {
+    Reader::draw(false);
+  } else if (g_state == ST_MENU) {
+    Menu::draw();
+  } else {
+    goMenu();
+  }
+}
+
 void handleReading(const Input::Event& ev) {
   switch (ev.button) {
     case Input::BTN_PREV:
@@ -257,11 +283,7 @@ void handleReading(const Input::Event& ev) {
       break;
     case Input::BTN_BACK:
       Reader::flushProgress();
-      if (ev.longPress) {
-        toggleWifi();
-      } else {
-        goMenu();
-      }
+      goMenu();
       break;
     default:
       break;
@@ -351,6 +373,36 @@ void handleWifi(const Input::Event& ev) {
 #endif
 }
 
+void dispatch(const Input::Event& ev) {
+  // Long BACK shows the screensaver. Indexing and WiFi treat BACK as
+  // cancel/exit however long it's held.
+  if (ev.button == Input::BTN_BACK && ev.longPress &&
+      (g_state == ST_READING || g_state == ST_MENU || g_state == ST_MESSAGE)) {
+    showScreensaver();
+    return;
+  }
+  switch (g_state) {
+    case ST_READING:
+      handleReading(ev);
+      break;
+    case ST_MENU:
+      handleMenu(ev);
+      break;
+    case ST_INDEXING:
+      handleIndexing(ev);
+      break;
+    case ST_WIFI:
+      handleWifi(ev);
+      break;
+    case ST_MESSAGE:
+      goMenu();
+      break;
+    case ST_SCREENSAVER:
+      leaveScreensaver();  // the press only wakes: it does nothing else
+      break;
+  }
+}
+
 void splash() {
   Display::clear();
   Display::setFont(Display::FONT_LARGE);
@@ -422,23 +474,7 @@ void loop() {
   Input::Event ev;
   if (Input::poll(ev)) {
     Serial.printf("[in] %s%s\n", Input::name(ev.button), ev.longPress ? " (long)" : "");
-    switch (g_state) {
-      case ST_READING:
-        handleReading(ev);
-        break;
-      case ST_MENU:
-        handleMenu(ev);
-        break;
-      case ST_INDEXING:
-        handleIndexing(ev);
-        break;
-      case ST_WIFI:
-        handleWifi(ev);
-        break;
-      case ST_MESSAGE:
-        goMenu();
-        break;
-    }
+    dispatch(ev);
   }
 
   if (Paginator::indexing()) {

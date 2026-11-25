@@ -174,7 +174,7 @@ of the above. None of these endpoints exist in the normal build.
 
 With no saved credentials, the device brings up an access point when WiFi is turned on:
 
-1. Long-press **BACK** (or *Settings → WiFi: turn on*) on the device.
+1. Choose *Settings → WiFi: turn on* on the device (long-press **OK** while reading).
 2. Connect to the `ubiblion` network with password `ubiblion`.
 3. Open `http://192.168.4.1`, expand **Network settings** and enter your SSID and password.
 4. Turn WiFi off and back on: it now joins your network and answers at `http://ubiblion.local`.
@@ -193,11 +193,16 @@ and [Catalan](docs/manuals/manual-ubiblion-ca.pdf).
 | PREV | Previous page | 10 pages back |
 | NEXT | Next page | 10 pages forward |
 | OK | Library / select | Settings |
-| BACK | Back | Turn WiFi on or off (while reading or in the library) |
+| BACK | Back | Screensaver (while reading or in the menus) |
 
 In the library, **long OK** on a book asks for confirmation before deleting it, and the last row in
 the list (*Settings…*) opens the configuration menu: font size, how often a full refresh happens,
 WiFi, reindexing, and (when more than one is compiled in) the interface language.
+
+The **screensaver** shows one of the images in `assets/screensavers/`, taking turns; any button goes
+back to where you were. E-paper keeps the picture even with the power off. To use your own images,
+replace those files, run `python tools/make_screensavers.py` (needs Pillow) and upload the firmware
+again; each image takes 5000 bytes of program flash.
 
 WiFi is only on while its screen is showing: **BACK** leaves that screen and turns the radio off, so
 it never runs in the background (it saves about 70mA and leaves more heap for rendering). Development
@@ -206,7 +211,7 @@ by itself at boot is decided by the **wifiOnBoot** setting, configurable from th
 
 | Value | Behavior |
 |---|---|
-| `0` | Never: only via the button or the menu |
+| `0` | Never: only via the menu |
 | `1` | Only if there are no books (default): handles the first boot, when the only useful thing to do is receive a book |
 | `2` | Always: the sensible choice on a device with no buttons or one that's permanently plugged in |
 
@@ -269,6 +274,7 @@ src/
   paginator.*   line wrapping and the page index
   reader.*      reading screen and deferred progress save
   menu.*        library, settings and delete confirmation
+  screensavers.h  generated from assets/screensavers/ (make_screensavers.py)
   power.*       CPU frequency and light sleep between presses (ESP32)
   webserver.cpp WiFi on demand, REST API and the web UI
   webui.h       (kept out of webserver.h: on Windows/NTFS -Isrc would shadow

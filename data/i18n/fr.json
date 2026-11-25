@@ -57,7 +57,7 @@
   "net.apiKeyPlaceholder": "vide = pas de clé",
   "net.fullRefresh": "Rafraîchissement complet tous les",
   "net.wifiOnBoot": "Activer le WiFi au démarrage",
-  "net.wifiOnBoot0": "Jamais (bouton seulement)",
+  "net.wifiOnBoot0": "Jamais (menu seulement)",
   "net.wifiOnBoot1": "Seulement s'il n'y a aucun livre",
   "net.wifiOnBoot2": "Toujours",
   "net.language": "Langue de l'écran de la liseuse",

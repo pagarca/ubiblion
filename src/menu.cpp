@@ -211,7 +211,6 @@ Action handleLibrary(const Input::Event& ev, char* outId, size_t outIdLen) {
       strlcpy(outId, Library::idAt(g_sel), outIdLen);
       return ACT_OPEN_BOOK;
     case Input::BTN_BACK:
-      if (ev.longPress) return ACT_TOGGLE_WIFI;
       return ACT_NONE;  // returning to the reader is handled in handle()
     default:
       return ACT_NONE;

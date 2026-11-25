@@ -78,6 +78,9 @@ void flushFull();
 void flushWindow(int16_t x, int16_t y, int16_t w, int16_t h);
 
 void setFullRefreshEvery(uint8_t pages);
+// Draws a full-screen 1bpp PROGMEM image (MSB first, set bit = black).
+void fullScreenImage(const uint8_t* bitmap);
+
 void hibernate();
 // Switches the panel's drive voltages off; the next refresh turns them back
 // on by itself. Cheap to call when they are already off.

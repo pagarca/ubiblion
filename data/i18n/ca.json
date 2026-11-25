@@ -57,7 +57,7 @@
   "net.apiKeyPlaceholder": "buit = sense clau",
   "net.fullRefresh": "Refresc complet cada",
   "net.wifiOnBoot": "Engegar el WiFi en arrencar",
-  "net.wifiOnBoot0": "Mai (només amb el botó)",
+  "net.wifiOnBoot0": "Mai (només des del menú)",
   "net.wifiOnBoot1": "Només si no hi ha llibres",
   "net.wifiOnBoot2": "Sempre",
   "net.language": "Idioma de la pantalla del lector",

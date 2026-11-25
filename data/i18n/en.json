@@ -57,7 +57,7 @@
   "net.apiKeyPlaceholder": "empty = no key",
   "net.fullRefresh": "Full refresh every",
   "net.wifiOnBoot": "Turn WiFi on at boot",
-  "net.wifiOnBoot0": "Never (button only)",
+  "net.wifiOnBoot0": "Never (menu only)",
   "net.wifiOnBoot1": "Only if there are no books",
   "net.wifiOnBoot2": "Always",
   "net.language": "Reader's screen language",
