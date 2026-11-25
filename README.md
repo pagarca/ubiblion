@@ -199,7 +199,7 @@ In the library, **long OK** on a book asks for confirmation before deleting it, 
 the list (*Settings…*) opens the configuration menu: font size, how often a full refresh happens,
 WiFi, reindexing, and (when more than one is compiled in) the interface language.
 
-The **screensaver** shows one of the images in `assets/screensavers/`, taking turns; any button goes
+The **screensaver** shows one of the images in `assets/screensavers/` (up to 4), taking turns; any button goes
 back to where you were. E-paper keeps the picture even with the power off. To use your own images,
 replace those files, run `python tools/make_screensavers.py` (needs Pillow) and upload the firmware
 again; each image takes 5000 bytes of program flash.
