@@ -22,7 +22,11 @@
 #include "paginator.h"
 #include "power.h"
 #include "reader.h"
+#if __has_include("screensavers_local.h")
+#include "screensavers_local.h"  // your own images, not in git
+#else
 #include "screensavers.h"
+#endif
 #include "webui.h"
 
 namespace {

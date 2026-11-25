@@ -6,8 +6,8 @@
 
 Pick up to four images, see them exactly as the e-paper will show them, put
 them in order and press the upload button. It keeps copies in
-assets/screensavers/, regenerates src/screensavers.h (make_screensavers.py)
-and builds and flashes the firmware with PlatformIO.
+assets/screensavers/local/ (ignored by git, so your pictures stay private),
+runs make_screensavers.py and builds and flashes the firmware with PlatformIO.
 """
 
 import queue
@@ -24,14 +24,12 @@ from PIL import Image, ImageOps, ImageTk
 
 import make_screensavers as converter
 
-EXTENSIONS = (".png", ".jpg", ".jpeg")
 ENVIRONMENTS = ("esp32dev", "nodemcuv2")
 
 
 def current_images():
-    if not converter.SOURCE.is_dir():
-        return []
-    return sorted(p for p in converter.SOURCE.iterdir() if p.suffix.lower() in EXTENSIONS)
+    """Your own images or, if there are none yet, the default ones."""
+    return converter.find_images(converter.LOCAL) or converter.find_images(converter.SOURCE)
 
 
 def preview(path):
@@ -41,19 +39,19 @@ def preview(path):
 
 
 def save_images(paths):
-    """Makes assets/screensavers/ hold exactly `paths`, in that order, and
-    regenerates the header."""
+    """Makes assets/screensavers/local/ hold exactly `paths`, in that order, and
+    regenerates the header. The default images are never touched."""
     # Read everything first: some sources are files this is about to replace.
     files = []
     for number, path in enumerate(paths, 1):
         name = re.sub(r"^\d\d-", "", path.stem)
         files.append((f"{number:02d}-{name}{path.suffix.lower()}", path.read_bytes()))
-    converter.SOURCE.mkdir(parents=True, exist_ok=True)
-    for old in current_images():
+    converter.LOCAL.mkdir(parents=True, exist_ok=True)
+    for old in converter.find_images(converter.LOCAL):
         old.unlink()
     saved = []
     for name, data in files:
-        target = converter.SOURCE / name
+        target = converter.LOCAL / name
         target.write_bytes(data)
         saved.append(target)
     converter.main()
@@ -190,10 +188,10 @@ class App:
 
     def save(self):
         kept = {path.resolve() for path, _ in self.images}
-        dropped = [p.name for p in current_images() if p.resolve() not in kept]
+        dropped = [p.name for p in converter.find_images(converter.LOCAL) if p.resolve() not in kept]
         if dropped and not messagebox.askokcancel(
             "Quitar imágenes",
-            "Se borrarán de assets/screensavers/:\n\n" + "\n".join(dropped),
+            "Se borrarán de assets/screensavers/local/:\n\n" + "\n".join(dropped),
         ):
             return False
         try:

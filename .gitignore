@@ -11,3 +11,7 @@ data/index.html
 
 # Local print layouts of the manuals.
 output/
+
+# Your own screensaver images and the header generated from them.
+assets/screensavers/local/
+src/screensavers_local.h
