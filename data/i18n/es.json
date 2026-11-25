@@ -30,7 +30,7 @@
   "upload.ready": "«{title}» listo para leer.",
   "upload.error": "Error con «{name}»: {error}",
   "dev.title": "Modo desarrollo",
-  "dev.desc": "El firmware lleva el flag dev: WiFi siempre encendido y control remoto.",
+  "dev.desc": "El firmware lleva el flag dev: WiFi encendido al arrancar y control remoto.",
   "dev.longPress": "pulsación larga",
   "dev.screenTitle": "Pantalla del lector",
   "dev.refreshScreen": "Releer pantalla",

@@ -30,7 +30,7 @@
   "upload.ready": "„{title}“ ist bereit zum Lesen.",
   "upload.error": "Fehler bei „{name}“: {error}",
   "dev.title": "Entwicklermodus",
-  "dev.desc": "Diese Firmware hat das dev-Flag: WLAN immer an und Fernsteuerung.",
+  "dev.desc": "Diese Firmware hat das dev-Flag: WLAN beim Start an und Fernsteuerung.",
   "dev.longPress": "langer Druck",
   "dev.screenTitle": "Bildschirm des Readers",
   "dev.refreshScreen": "Bildschirm neu lesen",

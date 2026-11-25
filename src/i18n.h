@@ -1,4 +1,4 @@
-// On-device UI strings, translated into up to five languages.
+// On-device UI strings, translated into up to six languages.
 //
 // Which languages get compiled into the firmware is controlled by the
 // UBIBLION_LANG_EN/ES/FR/DE/IT build flags (see platformio.ini): each is a

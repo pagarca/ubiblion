@@ -2,7 +2,7 @@
 
 #include "config.h"
 
-// Default to all five languages compiled in if the build didn't say
+// Default to all six languages compiled in if the build didn't say
 // otherwise. Disabling one here trims its string table out of the firmware
 // binary entirely (see the UBIBLION_LANG_* flags in platformio.ini).
 #ifndef UBIBLION_LANG_EN

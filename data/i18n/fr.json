@@ -30,7 +30,7 @@
   "upload.ready": "« {title} » est prêt à être lu.",
   "upload.error": "Erreur avec « {name} » : {error}",
   "dev.title": "Mode développement",
-  "dev.desc": "Ce firmware a le flag dev : WiFi toujours actif et contrôle à distance.",
+  "dev.desc": "Ce firmware a le flag dev : WiFi activé au démarrage et contrôle à distance.",
   "dev.longPress": "appui long",
   "dev.screenTitle": "Écran de la liseuse",
   "dev.refreshScreen": "Relire l'écran",

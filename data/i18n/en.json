@@ -30,7 +30,7 @@
   "upload.ready": "«{title}» is ready to read.",
   "upload.error": "Error with «{name}»: {error}",
   "dev.title": "Development mode",
-  "dev.desc": "This firmware has the dev flag: WiFi always on and remote control.",
+  "dev.desc": "This firmware has the dev flag: WiFi on at boot and remote control.",
   "dev.longPress": "long press",
   "dev.screenTitle": "Reader screen",
   "dev.refreshScreen": "Reread screen",

@@ -30,7 +30,7 @@
   "upload.ready": "«{title}» llest per llegir.",
   "upload.error": "Error amb «{name}»: {error}",
   "dev.title": "Mode desenvolupament",
-  "dev.desc": "Aquest firmware té el flag dev: WiFi sempre encès i control remot.",
+  "dev.desc": "Aquest firmware té el flag dev: WiFi encès en arrencar i control remot.",
   "dev.longPress": "pressió llarga",
   "dev.screenTitle": "Pantalla del lector",
   "dev.refreshScreen": "Rellegeix pantalla",

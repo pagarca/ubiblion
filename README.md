@@ -64,8 +64,8 @@ Differences from the ESP8266 worth knowing:
 - The serial port stays **full-duplex**: GPIO3 is not a button here, so nothing is ever stolen and
   logs work both ways.
 - Build with the `esp32dev` or `dev_esp32` environments (see below); the flash
-  is split by `partitions_ubiblion.csv` (1MB app + ~2.94MB LittleFS). The binary weighs ~950KB, so
-  the app partition runs at ~90% — it fits, but if a future build outgrows 1MB, trim 256KB off the
+  is split by `partitions_ubiblion.csv` (1MB app + ~2.94MB LittleFS). The binary weighs ~960KB, so
+  the app partition runs at ~92% — it fits, but if a future build outgrows 1MB, trim 256KB off the
   littlefs row in the CSV first.
 - GPIO16/17 are used by the display: fine on the WROOM-32 dev kits, not on a WROVER (they're the
   PSRAM pins).
@@ -113,8 +113,8 @@ Also brought up and verified on real ESP32 hardware (DevKitC, WROOM-32): the dis
 pin map (splash, WiFi screen, full refreshes), the LittleFS partition, AP first boot and STA
 connection, the REST API (status, library, upload with in-place EPUB-less text indexing of 300+ pages,
 byte-exact book download), UTF-8 pagination with accents, and the development-mode screen mirror.
-Version 1.0 is in use on that board with the four physical buttons wired, including light sleep between
-presses.
+Since version 1.0 it has been in use on that board with the four physical buttons wired, including light
+sleep between presses.
 
 Uploading a multi-megabyte book over WiFi to a single-core microcontroller genuinely takes a couple of
 minutes end to end (transfer + writing to flash + indexing); the web UI's `fetch()` has no built-in
@@ -371,8 +371,8 @@ by hand onto the real screen with `drawPixel()`, which is reliable with any colo
 through u8g2's decoder. Full accent and UTF-8 support is kept on highlighted menu rows.
 
 **Memory.** The full framebuffer (200x200/8 = 5000 bytes) is kept in RAM: that's what allows using
-`display(partial)` and `displayWindow()` without repainting in bands. With that, the firmware's static
-data adds up to about 6.4KB, leaving plenty of heap for the web server and rendering strings.
+`display(partial)` and `displayWindow()` without repainting in bands. Even so, the ESP8266 build uses
+under 60% of its 80KB of RAM at link time, leaving heap for the web server and rendering strings.
 
 ### User manuals
 

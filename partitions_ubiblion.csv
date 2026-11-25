@@ -2,8 +2,8 @@
 #
 # Book storage gets the lion's share, mirroring the ESP8266's
 # eagle.flash.4m3m.ld split (~1MB program + ~3MB filesystem). The app
-# partition is 1MB: the firmware is ~950KB there (WiFi stack linked in), so
-# there's headroom but it does run at ~90% -- if a build ever outgrows it,
+# partition is 1MB: the firmware is ~960KB there (WiFi stack linked in), so
+# there's headroom but it does run at ~92% -- if a build ever outgrows it,
 # trim 256KB off the littlefs row below (it fits in the 4MB either way) and
 # update the offset.
 #
