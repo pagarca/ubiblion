@@ -200,9 +200,18 @@ the list (*Settings…*) opens the configuration menu: font size, how often a fu
 WiFi, reindexing, and (when more than one is compiled in) the interface language.
 
 The **screensaver** shows one of the images in `assets/screensavers/` (up to 4), taking turns; any button goes
-back to where you were. E-paper keeps the picture even with the power off. To use your own images,
-replace those files, run `python tools/make_screensavers.py` (needs Pillow) and upload the firmware
-again; each image takes 5000 bytes of program flash.
+back to where you were. E-paper keeps the picture even with the power off.
+
+To use your own images, run the little window below (needs Pillow): pick them, check how they'll look,
+order them and press the save-and-flash button (its labels are in Spanish).
+
+```bash
+python tools/screensaver_gui.py
+```
+
+By hand it's the same: replace the files in `assets/screensavers/`, run
+`python tools/make_screensavers.py` and upload the firmware. Each image takes 5000 bytes of program
+flash.
 
 WiFi is only on while its screen is showing: **BACK** leaves that screen and turns the radio off, so
 it never runs in the background (it saves about 70mA and leaves more heap for rendering). Development
